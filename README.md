@@ -1,2 +1,2 @@
 # asc2tiles
-Slice input ascii file to tiles with specified zoom and detail levels
+A python tool to slice input ascii file to tiles with specified zoom and detail levels
