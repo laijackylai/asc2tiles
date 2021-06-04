@@ -10,9 +10,10 @@ import math
 @click.option('--max-lat', prompt='max lat', default=22.57161074, help='maximum latitude of the input data')
 @click.option('--min-lon', prompt='min lon', default=113.825288215, help='minimum longitude of the input data')
 @click.option('--max-lon', prompt='max lon', default=114.444071614, help='maximum longitude of the input data')
-@click.option('--max-zoom', prompt='max zoom', default=20, help='maximum zoom level')
+@click.option('--max-zoom', prompt='max zoom', default=15, help='maximum zoom level')
+@click.option('--detail', prompt='detail level', default=0.5, help='detail level decrease per zoom level')
 # * hk boundaries: [113.825288215, 22.137987659, 114.444071614, 22.57161074] (min_lon, min_lat, max_lon, max_lat)
-def main(input_file, skip_rows, min_lat, max_lat, min_lon, max_lon, max_zoom):
+def main(input_file, skip_rows, min_lat, max_lat, min_lon, max_lon, max_zoom, detail):
     """main function"""
     check_file_type(input_file)
 
@@ -40,11 +41,27 @@ def get_lon(shape, min_lon, max_lon):
 
 def get_tiles(min_lat, max_lat, min_lon, max_lon, max_zoom):
     """get the metadata on how to slice the input"""
-    for zoom in range(1, max_zoom + 1):
-        ll_tile = lat_lon_to_tile(min_lat, min_lon, zoom)
-        ur_tile = lat_lon_to_tile(max_lat, max_lon, zoom)
+    for z in reversed(range(1, max_zoom + 1)):
+        ll_tile = lat_lon_to_tile(min_lat, min_lon, z)
+        ur_tile = lat_lon_to_tile(max_lat, max_lon, z)
         if(ll_tile != ur_tile):
-            print(ll_tile, ur_tile)
+            x_tile_range = np.array([ll_tile[0], ur_tile[0]])
+            y_tile_range = np.array([ur_tile[1], ll_tile[1]])
+            for x in range(x_tile_range[0], x_tile_range[1] + 1):
+                for y in range(y_tile_range[0], y_tile_range[1] + 1):
+                    tl_corner = num2deg(x, y, z)
+                    tr_corner = num2deg(x + 1, y, z)
+                    bl_corner = num2deg(x, y + 1, z)
+                    br_corner = num2deg(x + 1, y + 1, z)
+                    print(tl_corner, tr_corner, bl_corner, br_corner)
+
+
+def num2deg(xtile, ytile, zoom):
+    n = 2.0 ** zoom
+    lon_deg = xtile / n * 360.0 - 180.0
+    lat_rad = math.atan(math.sinh(math.pi * (1 - 2 * ytile / n)))
+    lat_deg = math.degrees(lat_rad)
+    return (lat_deg, lon_deg)
 
 
 def lat_lon_to_tile(lat_deg, lon_deg, zoom):
