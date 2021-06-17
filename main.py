@@ -1,6 +1,6 @@
-import numpy as np
 import click
 import math
+import numpy as np
 
 
 @click.command()
@@ -21,7 +21,8 @@ def main(input_file, skip_rows, min_lat, max_lat, min_lon, max_lon, max_zoom, de
     data_shape = np.shape(asc_data)
     lat_2d = get_lat(data_shape, min_lat, max_lat)
     lon_2d = get_lon(data_shape, min_lon, max_lon)
-    get_tiles(min_lat, max_lat, min_lon, max_lon, max_zoom)
+    tiles = get_tiles(min_lat, max_lat, min_lon,
+                      max_lon, max_zoom, lat_2d, lon_2d)
     # load_and_parse_asc(input_file, skip_rows)
 
 
@@ -39,7 +40,7 @@ def get_lon(shape, min_lon, max_lon):
     return arr2d.T
 
 
-def get_tiles(min_lat, max_lat, min_lon, max_lon, max_zoom):
+def get_tiles(min_lat, max_lat, min_lon, max_lon, max_zoom, lat_2d, lon_2d):
     """get the metadata on how to slice the input"""
     for z in reversed(range(1, max_zoom + 1)):
         ll_tile = lat_lon_to_tile(min_lat, min_lon, z)
@@ -53,7 +54,6 @@ def get_tiles(min_lat, max_lat, min_lon, max_lon, max_zoom):
                     tr_corner = num2deg(x + 1, y, z)
                     bl_corner = num2deg(x, y + 1, z)
                     br_corner = num2deg(x + 1, y + 1, z)
-                    print(tl_corner, tr_corner, bl_corner, br_corner)
 
 
 def num2deg(xtile, ytile, zoom):
@@ -61,7 +61,7 @@ def num2deg(xtile, ytile, zoom):
     lon_deg = xtile / n * 360.0 - 180.0
     lat_rad = math.atan(math.sinh(math.pi * (1 - 2 * ytile / n)))
     lat_deg = math.degrees(lat_rad)
-    return (lat_deg, lon_deg)
+    return (lat_deg, lon_deg)  # lat, lon
 
 
 def lat_lon_to_tile(lat_deg, lon_deg, zoom):
